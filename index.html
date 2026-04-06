@@ -6,1008 +6,329 @@
   <title>Dashboard de Tráfego — Apromed</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+    :root {
+      --bg-primary: #0c1220;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --border: rgba(148, 163, 184, 0.08);
+      --border-hover: rgba(148, 163, 184, 0.15);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #3b82f6;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #f1f5f9;
-      line-height: 1.6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .header {
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-      padding: 24px 32px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-wrapper {
-      max-width: 1800px;
-      margin: 0 auto;
+    /* NAVBAR */
+    .navbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
-      flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 100;
     }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: white;
     }
-    .logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 900;
-      color: white;
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    .nav-title { font-size: 15px; font-weight: 600; }
+    .nav-sub { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .nav-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 2s infinite; }
+    .status-dot.online { background: var(--green); }
+    .status-dot.loading { background: var(--orange); }
+    .status-dot.error { background: var(--red); animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .btn-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-secondary); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s;
     }
-    .header-text h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #f1f5f9;
-      letter-spacing: -0.5px;
-    }
-    .header-text p {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 2px;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(30, 41, 59, 0.6);
-      backdrop-filter: blur(10px);
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-    }
-    .filter-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-    .filter-input {
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: #f1f5f9;
-      background: rgba(15, 23, 42, 0.5);
-      transition: all 0.3s;
-    }
-    .filter-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      background: rgba(59, 130, 246, 0.1);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-    }
-    .btn-secondary {
-      background: rgba(148, 163, 184, 0.1);
-      color: #cbd5e1;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-    }
-    .btn-secondary:hover {
-      background: rgba(148, 163, 184, 0.15);
-      border-color: rgba(148, 163, 184, 0.3);
-    }
-    .btn-refresh {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    }
-    .btn-refresh:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-    }
+    .btn-icon:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: var(--accent); }
 
-    .status-bar {
-      max-width: 1800px;
-      margin: 0 auto;
-      padding: 12px 32px 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    /* TOOLBAR */
+    .toolbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      position: sticky; top: 56px; z-index: 99;
     }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
+    .tb-group {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(30,41,59,0.4); border-radius: var(--radius-sm);
+      padding: 2px; border: 1px solid var(--border);
     }
-    .status-dot.online { background: #10b981; }
-    .status-dot.loading { background: #f59e0b; }
-    .status-dot.error { background: #ef4444; animation: none; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .tb-btn {
+      padding: 6px 12px; border-radius: 6px; border: none;
+      background: transparent; color: var(--text-secondary);
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
     }
-    .status-text {
-      font-size: 11px;
-      color: #64748b;
+    .tb-btn:hover { color: var(--text-primary); background: rgba(148,163,184,0.08); }
+    .tb-btn.active { background: var(--accent); color: white; box-shadow: 0 1px 4px rgba(59,130,246,0.3); }
+    .tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 8px; flex-shrink: 0; }
+    .tb-date {
+      display: flex; align-items: center; gap: 4px;
+      background: rgba(30,41,59,0.4); border-radius: var(--radius-sm);
+      padding: 2px 8px; border: 1px solid var(--border);
     }
+    .tb-date label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .tb-date input {
+      border: none; background: transparent; color: var(--text-primary);
+      font-size: 12px; font-family: inherit; padding: 5px 4px; outline: none; width: 120px;
+    }
+    .tb-date input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+    .tb-date-dash { color: var(--text-muted); font-size: 11px; padding: 0 2px; }
 
-    .main {
-      max-width: 1800px;
-      margin: 0 auto;
-      padding: 24px 32px 40px;
-    }
+    /* MAIN */
+    .main { max-width: 1600px; margin: 0 auto; padding: 24px; }
 
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 24px;
-      margin-bottom: 40px;
-    }
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
     .kpi-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 16px;
-      padding: 28px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px;
+      backdrop-filter: blur(10px); transition: border-color 0.2s; position: relative;
     }
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, currentColor, transparent);
-    }
-    .kpi-card.blue { color: #3b82f6; }
-    .kpi-card.green { color: #10b981; }
-    .kpi-card.orange { color: #f59e0b; }
-    .kpi-card.red { color: #ef4444; }
-    .kpi-card:hover {
-      border-color: rgba(148, 163, 184, 0.2);
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    }
-    .kpi-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
-    .kpi-value {
-      font-size: 36px;
-      font-weight: 800;
-      color: #f1f5f9;
-      line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -1px;
-    }
-    .kpi-sub {
-      font-size: 13px;
-      color: #94a3b8;
-    }
+    .kpi-card:hover { border-color: var(--border-hover); }
+    .kpi-bar { width: 4px; height: 32px; border-radius: 2px; position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+    .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .kpi-value { font-size: 28px; font-weight: 700; line-height: 1.1; letter-spacing: -0.5px; }
+    .kpi-value.sm { font-size: 22px; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-    .section {
-      margin-bottom: 40px;
+    /* SECTIONS */
+    .section { margin-bottom: 24px; }
+    .section-header {
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .section-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #f1f5f9;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      letter-spacing: -0.5px;
-    }
-    .section-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-    .dot-blue { background: #3b82f6; }
-    .dot-green { background: #10b981; }
-    .dot-orange { background: #f59e0b; }
-
-    .chart-row {
-      display: grid;
-      gap: 24px;
-      margin-bottom: 24px;
-    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .chart-row { display: grid; gap: 16px; }
     .chart-row-1 { grid-template-columns: 1fr; }
-    .chart-row-2 { grid-template-columns: repeat(2, 1fr); }
+    .chart-row-2 { grid-template-columns: repeat(2,1fr); }
     .chart-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 16px;
-      padding: 28px;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; backdrop-filter: blur(10px); transition: border-color 0.2s;
     }
-    .chart-card:hover {
-      border-color: rgba(148, 163, 184, 0.2);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    }
-    .chart-wrapper {
-      position: relative;
-      height: 320px;
-    }
+    .chart-card:hover { border-color: var(--border-hover); }
+    .chart-wrap { position: relative; height: 300px; }
 
+    /* LOADING */
     .loading-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      flex-direction: column;
-      gap: 20px;
+      position: fixed; inset: 0; background: rgba(12,18,32,0.95);
+      display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 16px;
     }
-    .loading-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(59, 130, 246, 0.2);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+    .spinner { width: 36px; height: 36px; border: 3px solid rgba(59,130,246,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text {
-      font-size: 14px;
-      color: #94a3b8;
-    }
+    .loading-text { font-size: 13px; color: var(--text-muted); }
 
-    .quick-filters {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .btn-quick {
-      border: none;
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: rgba(148, 163, 184, 0.1);
-      color: #cbd5e1;
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      white-space: nowrap;
-    }
-    .btn-quick:hover {
-      background: rgba(59, 130, 246, 0.15);
-      border-color: rgba(59, 130, 246, 0.3);
-      color: #93c5fd;
-    }
-    .btn-quick.active {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: #3b82f6;
-      color: #60a5fa;
-    }
+    .footer { text-align: center; padding: 24px; color: var(--text-muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 32px; }
 
-    .footer {
-      text-align: center;
-      padding: 32px;
-      color: #64748b;
-      font-size: 12px;
-      border-top: 1px solid rgba(148, 163, 184, 0.1);
-      margin-top: 40px;
+    /* RESPONSIVE */
+    @media (max-width:1024px) { .chart-row-2{grid-template-columns:1fr} .kpi-grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:768px) {
+      .navbar{padding:0 16px;height:48px} .nav-sub{display:none} .nav-title{font-size:14px}
+      .toolbar{padding:8px 16px;gap:6px;top:48px} .tb-btn{padding:5px 10px;font-size:11px}
+      .tb-date input{width:100px;font-size:11px} .tb-sep{display:none}
+      .main{padding:16px} .kpi-grid{gap:10px} .kpi-card{padding:16px}
+      .kpi-value{font-size:22px} .kpi-value.sm{font-size:18px}
+      .chart-card{padding:14px} .chart-wrap{height:240px}
     }
-
-    @media (max-width: 1024px) {
-      .chart-row-2 { grid-template-columns: 1fr; }
-      .header-wrapper { flex-direction: column; align-items: flex-start; }
-      .header-right { width: 100%; flex-wrap: wrap; }
-      .filter-group { width: 100%; flex-wrap: wrap; }
-    }
-    @media (max-width: 768px) {
-      .header { padding: 16px; }
-      .main { padding: 20px 12px; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .kpi-card { padding: 18px; }
-      .kpi-value { font-size: 24px; }
-      .kpi-label { font-size: 10px; margin-bottom: 8px; }
-      .kpi-sub { font-size: 11px; }
-      .chart-card { padding: 16px; }
-      .chart-wrapper { height: 260px; }
-      .section-title { font-size: 15px; }
-      .filter-group { padding: 8px 10px; gap: 8px; }
-      .filter-input { padding: 6px 8px; font-size: 11px; width: 100%; }
-      .filter-label { font-size: 10px; }
-      .btn { padding: 8px 12px; font-size: 11px; }
-      .quick-filters { gap: 6px; }
-      .btn-quick { padding: 5px 10px; font-size: 10px; }
-      .header-text h1 { font-size: 18px; }
-      .logo { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
-      .status-bar { padding: 8px 12px 0; }
-      .footer { padding: 20px 12px; }
-    }
-    @media (max-width: 480px) {
-      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .kpi-value { font-size: 20px; }
-      .kpi-card { padding: 14px; }
-      .header-right { gap: 8px; }
-      .chart-wrapper { height: 220px; }
+    @media (max-width:480px) {
+      .navbar{height:44px} .nav-logo{width:28px;height:28px;font-size:12px}
+      .toolbar{top:44px} .tb-group{flex-wrap:wrap}
+      .tb-date{width:100%} .kpi-value{font-size:20px} .kpi-value.sm{font-size:16px}
+      .kpi-card{padding:14px} .chart-wrap{height:200px}
     }
   </style>
 </head>
 <body>
 
 <div id="loadingOverlay" class="loading-overlay">
-  <div class="loading-spinner"></div>
+  <div class="spinner"></div>
   <div class="loading-text">Carregando dados do Meta Ads...</div>
 </div>
 
-<div class="header">
-  <div class="header-wrapper">
-    <div class="header-left">
-      <div class="logo">A</div>
-      <div class="header-text">
-        <h1>Dashboard de Tráfego</h1>
-        <p>Apromed — Gestão de Campanhas Meta Ads</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="quick-filters">
-        <button class="btn-quick" onclick="atalhoData('hoje')" id="qf-hoje">Hoje</button>
-        <button class="btn-quick" onclick="atalhoData('7dias')" id="qf-7dias">7 dias</button>
-        <button class="btn-quick" onclick="atalhoData('30dias')" id="qf-30dias">30 dias</button>
-        <button class="btn-quick" onclick="atalhoData('mesAtual')" id="qf-mesAtual">Mês atual</button>
-        <button class="btn-quick" onclick="atalhoData('mesAnterior')" id="qf-mesAnterior">Mês anterior</button>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">De:</span>
-        <input type="date" id="dateFrom" class="filter-input" />
-        <span class="filter-label">Até:</span>
-        <input type="date" id="dateTo" class="filter-input" />
-      </div>
-      <button class="btn btn-primary" onclick="aplicarFiltro()">Filtrar</button>
-      <button class="btn btn-secondary" onclick="resetarFiltro()">Resetar</button>
-      <button class="btn btn-refresh" onclick="carregarDados()">↻ Atualizar</button>
-    </div>
+<nav class="navbar">
+  <div class="nav-brand">
+    <div class="nav-logo">A</div>
+    <span class="nav-title">Apromed</span>
+    <span class="nav-sub">Dashboard de Tráfego</span>
   </div>
-</div>
+  <div class="nav-actions">
+    <div class="nav-status">
+      <div class="status-dot loading" id="statusDot"></div>
+      <span id="statusText">Conectando...</span>
+    </div>
+    <button class="btn-icon" onclick="carregarDados()" title="Atualizar dados">↻</button>
+  </div>
+</nav>
 
-<div class="status-bar">
-  <div class="status-dot loading" id="statusDot"></div>
-  <span class="status-text" id="statusText">Conectando à planilha...</span>
+<div class="toolbar">
+  <div class="tb-group">
+    <button class="tb-btn" onclick="atalho('hoje')" id="qf-hoje">Hoje</button>
+    <button class="tb-btn" onclick="atalho('7d')" id="qf-7d">7D</button>
+    <button class="tb-btn" onclick="atalho('30d')" id="qf-30d">30D</button>
+    <button class="tb-btn" onclick="atalho('mes')" id="qf-mes">Mês</button>
+    <button class="tb-btn" onclick="atalho('mesAnt')" id="qf-mesAnt">Mês ant.</button>
+    <button class="tb-btn" onclick="atalho('tudo')" id="qf-tudo">Tudo</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-date">
+    <label>De</label>
+    <input type="date" id="dateFrom" />
+    <span class="tb-date-dash">—</span>
+    <label>Até</label>
+    <input type="date" id="dateTo" />
+  </div>
 </div>
 
 <div class="main">
-
   <div class="kpi-grid">
-    <div class="kpi-card blue">
-      <div class="kpi-label">Leads Totais</div>
-      <div class="kpi-value" id="totalLeads">—</div>
-      <div class="kpi-sub">Período selecionado</div>
-    </div>
-    <div class="kpi-card green">
-      <div class="kpi-label">Investimento</div>
-      <div class="kpi-value" id="totalInvest" style="font-size:28px">—</div>
-      <div class="kpi-sub">Total acumulado</div>
-    </div>
-    <div class="kpi-card orange">
-      <div class="kpi-label">CPL Médio</div>
-      <div class="kpi-value" id="cplMedio">—</div>
-      <div class="kpi-sub">Custo por lead</div>
-    </div>
-    <div class="kpi-card red">
-      <div class="kpi-label">Dias no Período</div>
-      <div class="kpi-value" id="periodoInfo">—</div>
-      <div class="kpi-sub">Período selecionado</div>
-    </div>
+    <div class="kpi-card"><div class="kpi-bar" style="background:var(--accent)"></div><div class="kpi-label">Leads</div><div class="kpi-value" id="kLeads">—</div><div class="kpi-sub">Total no período</div></div>
+    <div class="kpi-card"><div class="kpi-bar" style="background:var(--green)"></div><div class="kpi-label">Investimento</div><div class="kpi-value sm" id="kInvest">—</div><div class="kpi-sub">Gasto acumulado</div></div>
+    <div class="kpi-card"><div class="kpi-bar" style="background:var(--orange)"></div><div class="kpi-label">CPL Médio</div><div class="kpi-value" id="kCpl">—</div><div class="kpi-sub">Custo por lead</div></div>
+    <div class="kpi-card"><div class="kpi-bar" style="background:var(--red)"></div><div class="kpi-label">Período</div><div class="kpi-value" id="kDias">—</div><div class="kpi-sub">Dias selecionados</div></div>
   </div>
 
   <div class="section">
-    <div class="section-title">
-      <span class="section-dot dot-blue"></span>
-      Leads por Semana
-    </div>
-    <div class="chart-row chart-row-1">
-      <div class="chart-card">
-        <div class="chart-wrapper">
-          <canvas id="weeklyLeadsChart"></canvas>
-        </div>
-      </div>
-    </div>
+    <div class="section-header"><span class="dot" style="background:var(--accent)"></span>Leads por Semana</div>
+    <div class="chart-row chart-row-1"><div class="chart-card"><div class="chart-wrap"><canvas id="cLeads"></canvas></div></div></div>
   </div>
-
   <div class="section">
-    <div class="section-title">
-      <span class="section-dot dot-orange"></span>
-      Análise de Custo e Investimento
-    </div>
+    <div class="section-header"><span class="dot" style="background:var(--orange)"></span>Custo e Investimento</div>
     <div class="chart-row chart-row-2">
-      <div class="chart-card">
-        <div class="chart-wrapper">
-          <canvas id="weeklyCplChart"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-wrapper">
-          <canvas id="weeklySpendChart"></canvas>
-        </div>
-      </div>
+      <div class="chart-card"><div class="chart-wrap"><canvas id="cCpl"></canvas></div></div>
+      <div class="chart-card"><div class="chart-wrap"><canvas id="cSpend"></canvas></div></div>
     </div>
   </div>
-
   <div class="section">
-    <div class="section-title">
-      <span class="section-dot dot-green"></span>
-      Performance por Especialidade
-    </div>
+    <div class="section-header"><span class="dot" style="background:var(--green)"></span>Performance por Especialidade</div>
     <div class="chart-row chart-row-2">
-      <div class="chart-card">
-        <div class="chart-wrapper">
-          <canvas id="campaignLeadsChart"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-wrapper">
-          <canvas id="campaignSpendChart"></canvas>
-        </div>
-      </div>
+      <div class="chart-card"><div class="chart-wrap"><canvas id="cEspL"></canvas></div></div>
+      <div class="chart-card"><div class="chart-wrap"><canvas id="cEspS"></canvas></div></div>
     </div>
   </div>
-
 </div>
 
-<div class="footer" id="footerText">Dashboard de Tráfego — Apromed 2026 · Dados ao vivo do Google Sheets + Meta Ads</div>
+<div class="footer" id="footerText">Apromed · Dashboard de Tráfego · Google Sheets + Meta Ads</div>
 
 <script>
-// =====================================================================
-// CONFIGURAÇÃO — URL da planilha publicada como CSV
-// =====================================================================
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlbw4maI8gYpwB3SqxVs5OSA88tCQVJVxgxrjlG_vzlebDI0sr8_Gzgid0zn0g6tU2Gnolw2UIaRYV/pub?gid=0&single=true&output=csv';
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTlbw4maI8gYpwB3SqxVs5OSA88tCQVJVxgxrjlG_vzlebDI0sr8_Gzgid0zn0g6tU2Gnolw2UIaRYV/pub?gid=0&single=true&output=csv';
+const ESP=['Endoscopia','Gastroenterologia','Hepatologia','Coloproctologia','Cirurgia'];
+const GC='rgba(148,163,184,0.06)';
+Chart.defaults.color='#64748b';
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+let CH={},DATA=[];
 
-const ESPECIALIDADES = ['Endoscopia', 'Gastroenterologia', 'Hepatologia', 'Coloproctologia', 'Cirurgia'];
-const gridColor = 'rgba(148, 163, 184, 0.1)';
-const textColor = '#94a3b8';
+function parseCSV(t){const l=t.split('\n');if(l.length<2)return[];const h=csvLine(l[0]),r=[];for(let i=1;i<l.length;i++){const ln=l[i].trim();if(!ln)continue;const v=csvLine(ln),o={};h.forEach((k,j)=>o[k.trim()]=(v[j]||'').trim());r.push(o)}return r}
+function csvLine(l){const r=[];let c='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'){if(i+1<l.length&&l[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}else{if(ch==='"')q=true;else if(ch===','){r.push(c);c=''}else c+=ch}}r.push(c);return r}
 
-Chart.defaults.color = textColor;
-Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif";
+function classEsp(n){const u=(n||'').toUpperCase();if(u.includes('ENDO')||u.includes('[EN'))return'Endoscopia';if(u.includes('GASTRO')||u.includes('[GA'))return'Gastroenterologia';if(u.includes('HEPATO')||u.includes('[HEP'))return'Hepatologia';if(u.includes('COLO')||u.includes('[CO'))return'Coloproctologia';if(u.includes('CIRURGIA')||u.includes('CAD'))return'Cirurgia';return null}
 
-let charts = {};
-let dadosBrutos = []; // Todos os registros da planilha
+function procDados(rows){return rows.map(r=>{const camp=r['Campaign Name']||r['campaign_name']||'';const day=r['Day']||r['day']||r['Data']||'';let s=r['Amount Spent']||r['amount_spent']||'0';s=s.replace(/\./g,'').replace(',','.');if(s==='0'){s=r['Amount Spent']||'0';if(s.includes(',')&&!s.includes('.'))s=s.replace(',','.')}return{campaign:camp,day,spend:parseFloat(s)||0,leads:parseInt(r['Leads']||r['leads']||'0')||0,esp:classEsp(camp)}}).filter(d=>d.day&&/^\d{4}-\d{2}-\d{2}$/.test(d.day))}
 
-// =====================================================================
-// PARSER CSV
-// =====================================================================
-function parseCSV(text) {
-  const lines = text.split('\n');
-  if (lines.length < 2) return [];
-  
-  // Parse header
-  const headers = parseCSVLine(lines[0]);
-  
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const values = parseCSVLine(line);
-    const row = {};
-    headers.forEach((h, idx) => {
-      row[h.trim()] = (values[idx] || '').trim();
-    });
-    rows.push(row);
+function weekLabel(ds){const d=new Date(ds+'T00:00:00');const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));const sun=new Date(mon);sun.setDate(mon.getDate()+6);const f=t=>String(t.getDate()).padStart(2,'0')+'/'+String(t.getMonth()+1).padStart(2,'0');return{label:f(mon)+'–'+f(sun),key:mon.toISOString().slice(0,10)}}
+
+function porSemana(data,de,ate){const f=data.filter(d=>d.day>=de&&d.day<=ate);const s={};f.forEach(d=>{const w=weekLabel(d.day);if(!s[w.key]){s[w.key]={label:w.label,key:w.key,leads:0,spend:0,esp:{}};ESP.forEach(e=>s[w.key].esp[e]={leads:0,spend:0})}s[w.key].leads+=d.leads;s[w.key].spend+=d.spend;if(d.esp&&s[w.key].esp[d.esp]){s[w.key].esp[d.esp].leads+=d.leads;s[w.key].esp[d.esp].spend+=d.spend}});return Object.values(s).sort((a,b)=>a.key.localeCompare(b.key))}
+
+function porEsp(data,de,ate){const f=data.filter(d=>d.day>=de&&d.day<=ate);const r={};ESP.forEach(e=>r[e]={leads:0,spend:0});f.forEach(d=>{if(d.esp&&r[d.esp]){r[d.esp].leads+=d.leads;r[d.esp].spend+=d.spend}});return r}
+
+const TT={backgroundColor:'rgba(12,18,32,0.95)',borderColor:'rgba(148,163,184,0.1)',borderWidth:1,padding:10,cornerRadius:8,titleFont:{size:12},bodyFont:{size:12}};
+
+function render(){
+  const de=$('dateFrom').value,ate=$('dateTo').value;if(!de||!ate)return;
+  const sem=porSemana(DATA,de,ate),esp=porEsp(DATA,de,ate);
+  if(!sem.length){alert('Sem dados para este período.');return}
+  Object.values(CH).forEach(c=>c?.destroy());CH={};
+  const lb=sem.map(s=>s.label),ld=sem.map(s=>s.leads),sp=sem.map(s=>s.spend),cp=sem.map(s=>s.leads>0?Math.round(s.spend/s.leads):0);
+  const tl=ld.reduce((a,b)=>a+b,0),ts=sp.reduce((a,b)=>a+b,0),tc=tl>0?Math.round(ts/tl):0;
+  const dias=Math.round((new Date(ate)-new Date(de))/864e5)+1;
+  $('kLeads').textContent=tl.toLocaleString('pt-BR');
+  $('kInvest').textContent='R$ '+ts.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  $('kCpl').textContent='R$ '+tc.toLocaleString('pt-BR');
+  $('kDias').textContent=dias+' dias';
+  const el=ESP.map(e=>esp[e].leads),es=ESP.map(e=>esp[e].spend),ec=ESP.map(e=>esp[e].leads>0?Math.round(esp[e].spend/esp[e].leads):0);
+
+  CH.l=new Chart($('cLeads'),{type:'bar',data:{labels:lb,datasets:[{data:ld,backgroundColor:ld.map(v=>v>=120?'#3b82f6':v>=80?'#60a5fa':'#93c5fd'),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' '+c.raw+' leads'}}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:GC},border:{display:false},beginAtZero:true}}}});
+
+  CH.c=new Chart($('cCpl'),{type:'line',data:{labels:lb,datasets:[{label:'CPL',data:cp,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.05)',borderWidth:2.5,pointBackgroundColor:cp.map(v=>v>200?'#ef4444':'#10b981'),pointRadius:5,pointBorderWidth:2,pointBorderColor:'#0c1220',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' R$ '+c.raw}}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:GC},border:{display:false},ticks:{callback:v=>'R$'+v}}}}});
+
+  CH.s=new Chart($('cSpend'),{type:'bar',data:{labels:lb,datasets:[{data:sp.map(v=>Math.round(v)),backgroundColor:'#8b5cf6',borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' R$ '+c.raw.toLocaleString('pt-BR')}}},scales:{x:{grid:{display:false},border:{display:false}},y:{grid:{color:GC},border:{display:false},ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k'}}}}});
+
+  CH.el=new Chart($('cEspL'),{type:'bar',data:{labels:ESP,datasets:[{data:el,backgroundColor:el.map(v=>v>=100?'#10b981':v>=30?'#3b82f6':'#f59e0b'),borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' '+c.raw+' leads · CPL R$ '+ec[c.dataIndex]}}},scales:{x:{grid:{color:GC},border:{display:false}},y:{grid:{display:false},border:{display:false}}}}});
+
+  CH.es=new Chart($('cEspS'),{type:'bar',data:{labels:ESP,datasets:[{data:es.map(v=>Math.round(v)),backgroundColor:es.map(v=>v>=15000?'#8b5cf6':v>=10000?'#a78bfa':'#c4b5fd'),borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>' R$ '+c.raw.toLocaleString('pt-BR')}}},scales:{x:{grid:{color:GC},border:{display:false},ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},border:{display:false}}}}});
+}
+
+async function carregarDados(){
+  const dot=$('statusDot'),txt=$('statusText'),ov=$('loadingOverlay');
+  dot.className='status-dot loading';txt.textContent='Carregando...';ov.style.display='flex';
+  try{
+    const res=await fetch(CSV_URL);if(!res.ok)throw new Error('HTTP '+res.status);
+    const t=await res.text();const rows=parseCSV(t);if(!rows.length)throw new Error('Planilha vazia');
+    DATA=procDados(rows);if(!DATA.length)throw new Error('Sem dados válidos');
+    const dts=DATA.map(d=>d.day).sort(),mn=dts[0],mx=dts[dts.length-1];
+    const mxD=new Date(mx+'T00:00:00'),defFrom=new Date(mxD.getFullYear(),mxD.getMonth(),1).toISOString().slice(0,10);
+    const $d=$('dateFrom'),$a=$('dateTo');
+    $d.value=defFrom;$d.min=mn;$d.max=mx;$a.value=mx;$a.min=mn;$a.max=mx;
+    dot.className='status-dot online';
+    const now=new Date();txt.textContent=DATA.length+' registros · '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+    $('footerText').textContent='Apromed · Dados de '+mn+' a '+mx+' · Google Sheets + Meta Ads';
+    render();
+  }catch(e){dot.className='status-dot error';txt.textContent='Erro: '+e.message;console.error(e)}
+  finally{ov.style.display='none'}
+}
+
+function atalho(t){
+  const h=new Date();let d,a;
+  switch(t){
+    case'hoje':d=a=fd(h);break;
+    case'7d':a=fd(h);{const x=new Date(h);x.setDate(x.getDate()-6);d=fd(x)}break;
+    case'30d':a=fd(h);{const x=new Date(h);x.setDate(x.getDate()-29);d=fd(x)}break;
+    case'mes':d=fd(new Date(h.getFullYear(),h.getMonth(),1));a=fd(h);break;
+    case'mesAnt':d=fd(new Date(h.getFullYear(),h.getMonth()-1,1));a=fd(new Date(h.getFullYear(),h.getMonth(),0));break;
+    case'tudo':if(DATA.length){const dt=DATA.map(x=>x.day).sort();d=dt[0];a=dt[dt.length-1]}break;
   }
-  return rows;
+  $('dateFrom').value=d;$('dateTo').value=a;
+  document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
+  const btn=$('qf-'+t);if(btn)btn.classList.add('active');
+  render();
 }
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        current += ch;
-      }
-    } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        result.push(current);
-        current = '';
-      } else {
-        current += ch;
-      }
-    }
-  }
-  result.push(current);
-  return result;
-}
+function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function $(id){return document.getElementById(id)}
 
-// =====================================================================
-// CLASSIFICAÇÃO DE ESPECIALIDADE
-// =====================================================================
-function classificarEspecialidade(campaignName) {
-  const name = (campaignName || '').toUpperCase();
-  if (name.includes('ENDO') || name.includes('[EN')) return 'Endoscopia';
-  if (name.includes('GASTRO') || name.includes('[GA')) return 'Gastroenterologia';
-  if (name.includes('HEPATO') || name.includes('[HEP')) return 'Hepatologia';
-  if (name.includes('COLO') || name.includes('[CO')) return 'Coloproctologia';
-  if (name.includes('CIRURGIA') || name.includes('CAD') || name.includes('[CAD')) return 'Cirurgia';
-  return null; // Remarketing e outros — não conta como especialidade
-}
-
-// =====================================================================
-// PROCESSAMENTO DOS DADOS
-// =====================================================================
-function processarDados(rows) {
-  return rows.map(r => {
-    // Detectar nomes das colunas (flexível para variações)
-    const campaign = r['Campaign Name'] || r['campaign_name'] || r['Nome da campanha'] || '';
-    const dayStr = r['Day'] || r['day'] || r['Data'] || '';
-    
-    // Amount Spent pode usar vírgula como decimal (pt-BR)
-    let spendRaw = r['Amount Spent'] || r['amount_spent'] || r['Valor usado (BRL)'] || '0';
-    spendRaw = spendRaw.replace(/\./g, '').replace(',', '.'); // 1.234,56 → 1234.56
-    // Se o valor parecer ter só uma vírgula como decimal (ex: "72,1")
-    if (spendRaw === '0') {
-      spendRaw = r['Amount Spent'] || '0';
-      if (spendRaw.includes(',') && !spendRaw.includes('.')) {
-        spendRaw = spendRaw.replace(',', '.');
-      }
-    }
-    const spend = parseFloat(spendRaw) || 0;
-    
-    let leadsRaw = r['Leads'] || r['leads'] || '0';
-    const leads = parseInt(leadsRaw) || 0;
-    
-    const especialidade = classificarEspecialidade(campaign);
-    
-    return {
-      campaign,
-      day: dayStr,
-      spend,
-      leads,
-      especialidade
-    };
-  }).filter(d => d.day && d.day.match(/^\d{4}-\d{2}-\d{2}$/));
-}
-
-// =====================================================================
-// AGRUPAMENTO SEMANAL
-// =====================================================================
-function getWeekLabel(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const day = d.getDay();
-  // Início da semana (segunda)
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - ((day + 6) % 7));
-  // Fim da semana (domingo)
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  
-  const fmt = (dt) => {
-    const dd = String(dt.getDate()).padStart(2, '0');
-    const mm = String(dt.getMonth() + 1).padStart(2, '0');
-    return `${dd}/${mm}`;
-  };
-  
-  return {
-    label: `${fmt(monday)}–${fmt(sunday)}`,
-    sortKey: monday.toISOString().slice(0, 10)
-  };
-}
-
-function agruparPorSemana(dados, dataInicio, dataFim) {
-  const filtrados = dados.filter(d => d.day >= dataInicio && d.day <= dataFim);
-  
-  const semanas = {};
-  filtrados.forEach(d => {
-    const week = getWeekLabel(d.day);
-    if (!semanas[week.sortKey]) {
-      semanas[week.sortKey] = {
-        label: week.label,
-        sortKey: week.sortKey,
-        leads: 0,
-        spend: 0,
-        esp: {}
-      };
-      ESPECIALIDADES.forEach(e => semanas[week.sortKey].esp[e] = { leads: 0, spend: 0 });
-    }
-    const s = semanas[week.sortKey];
-    s.leads += d.leads;
-    s.spend += d.spend;
-    if (d.especialidade && ESPECIALIDADES.includes(d.especialidade)) {
-      s.esp[d.especialidade].leads += d.leads;
-      s.esp[d.especialidade].spend += d.spend;
-    }
-  });
-  
-  return Object.values(semanas).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-}
-
-function agruparPorEspecialidade(dados, dataInicio, dataFim) {
-  const filtrados = dados.filter(d => d.day >= dataInicio && d.day <= dataFim);
-  
-  const result = {};
-  ESPECIALIDADES.forEach(e => result[e] = { leads: 0, spend: 0 });
-  
-  filtrados.forEach(d => {
-    if (d.especialidade && result[d.especialidade] !== undefined) {
-      result[d.especialidade].leads += d.leads;
-      result[d.especialidade].spend += d.spend;
-    }
-  });
-  
-  return result;
-}
-
-// =====================================================================
-// ATUALIZAR DASHBOARD
-// =====================================================================
-function atualizarDashboard() {
-  const dataInicio = document.getElementById('dateFrom').value;
-  const dataFim = document.getElementById('dateTo').value;
-  
-  if (!dataInicio || !dataFim) return;
-  
-  const semanas = agruparPorSemana(dadosBrutos, dataInicio, dataFim);
-  const espData = agruparPorEspecialidade(dadosBrutos, dataInicio, dataFim);
-  
-  if (semanas.length === 0) {
-    alert('Nenhum dado encontrado para o período selecionado.');
-    return;
-  }
-  
-  // Destruir gráficos anteriores
-  Object.values(charts).forEach(c => c?.destroy());
-  charts = {};
-  
-  // Dados semanais
-  const labels = semanas.map(s => s.label);
-  const leads = semanas.map(s => s.leads);
-  const spends = semanas.map(s => s.spend);
-  const cpls = semanas.map(s => s.leads > 0 ? Math.round(s.spend / s.leads) : 0);
-  
-  // KPIs
-  const totalLeads = leads.reduce((a, b) => a + b, 0);
-  const totalSpend = spends.reduce((a, b) => a + b, 0);
-  const cplMedio = totalLeads > 0 ? Math.round(totalSpend / totalLeads) : 0;
-  
-  // Calcular dias no período
-  const d1 = new Date(dataInicio);
-  const d2 = new Date(dataFim);
-  const dias = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-  
-  document.getElementById('totalLeads').textContent = totalLeads.toLocaleString('pt-BR');
-  document.getElementById('totalInvest').textContent = 'R$ ' + totalSpend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('cplMedio').textContent = 'R$ ' + cplMedio;
-  document.getElementById('periodoInfo').textContent = dias + ' dias';
-  
-  // Especialidades
-  const espLeads = ESPECIALIDADES.map(e => espData[e].leads);
-  const espSpend = ESPECIALIDADES.map(e => espData[e].spend);
-  const espCpl = ESPECIALIDADES.map(e => espData[e].leads > 0 ? Math.round(espData[e].spend / espData[e].leads) : 0);
-  
-  // =====================================================================
-  // GRÁFICOS
-  // =====================================================================
-  
-  // Leads semanais
-  charts.weekly = new Chart(document.getElementById('weeklyLeadsChart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Leads',
-        data: leads,
-        backgroundColor: leads.map(v => v >= 120 ? '#3b82f6' : v >= 80 ? '#60a5fa' : '#93c5fd'),
-        borderColor: 'transparent',
-        borderRadius: 8,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` ${ctx.raw} leads` } }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: gridColor, drawBorder: false }, beginAtZero: true }
-      }
-    }
-  });
-  
-  // CPL semanal
-  charts.cpl = new Chart(document.getElementById('weeklyCplChart'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'CPL (R$)',
-        data: cpls,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-        borderWidth: 3,
-        pointBackgroundColor: cpls.map(v => v > 200 ? '#ef4444' : '#10b981'),
-        pointRadius: 6,
-        pointBorderWidth: 2,
-        pointBorderColor: '#0f172a',
-        tension: 0.4,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { font: { size: 12 } } },
-        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw}` } }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v } }
-      }
-    }
-  });
-  
-  // Investimento semanal
-  charts.spend = new Chart(document.getElementById('weeklySpendChart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Investimento (R$)',
-        data: spends.map(v => Math.round(v)),
-        backgroundColor: '#8b5cf6',
-        borderColor: 'transparent',
-        borderRadius: 8,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } }
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v.toLocaleString('pt-BR') } }
-      }
-    }
-  });
-  
-  // Leads por especialidade
-  charts.campLeads = new Chart(document.getElementById('campaignLeadsChart'), {
-    type: 'bar',
-    data: {
-      labels: ESPECIALIDADES,
-      datasets: [{
-        label: 'Leads',
-        data: espLeads,
-        backgroundColor: espLeads.map(v => v >= 100 ? '#10b981' : v >= 30 ? '#3b82f6' : '#f59e0b'),
-        borderRadius: 8,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` ${ctx.raw} leads | CPL R$ ${espCpl[ctx.dataIndex]}` } }
-      },
-      scales: {
-        x: { grid: { color: gridColor, drawBorder: false } },
-        y: { grid: { display: false } }
-      }
-    }
-  });
-  
-  // Investimento por especialidade
-  charts.campSpend = new Chart(document.getElementById('campaignSpendChart'), {
-    type: 'bar',
-    data: {
-      labels: ESPECIALIDADES,
-      datasets: [{
-        label: 'Investimento (R$)',
-        data: espSpend.map(v => Math.round(v)),
-        backgroundColor: espSpend.map(v => v >= 15000 ? '#8b5cf6' : v >= 10000 ? '#a78bfa' : '#ddd6fe'),
-        borderRadius: 8,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } }
-      },
-      scales: {
-        x: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v.toLocaleString('pt-BR') } },
-        y: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-// =====================================================================
-// CARREGAR DADOS DA PLANILHA
-// =====================================================================
-async function carregarDados() {
-  const statusDot = document.getElementById('statusDot');
-  const statusText = document.getElementById('statusText');
-  const overlay = document.getElementById('loadingOverlay');
-  
-  statusDot.className = 'status-dot loading';
-  statusText.textContent = 'Carregando dados da planilha...';
-  overlay.style.display = 'flex';
-  
-  try {
-    const response = await fetch(SHEET_CSV_URL);
-    if (!response.ok) throw new Error('Erro ao acessar planilha: ' + response.status);
-    
-    const text = await response.text();
-    const rows = parseCSV(text);
-    
-    if (rows.length === 0) throw new Error('Planilha vazia ou formato inválido');
-    
-    dadosBrutos = processarDados(rows);
-    
-    if (dadosBrutos.length === 0) throw new Error('Nenhum dado válido encontrado');
-    
-    // Detectar range de datas
-    const datas = dadosBrutos.map(d => d.day).sort();
-    const minDate = datas[0];
-    const maxDate = datas[datas.length - 1];
-    
-    // Setar filtros para o mês mais recente por padrão
-    const maxD = new Date(maxDate + 'T00:00:00');
-    const primeiroDiaMes = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
-    const defaultFrom = primeiroDiaMes.toISOString().slice(0, 10);
-    
-    document.getElementById('dateFrom').value = defaultFrom;
-    document.getElementById('dateFrom').min = minDate;
-    document.getElementById('dateFrom').max = maxDate;
-    document.getElementById('dateTo').value = maxDate;
-    document.getElementById('dateTo').min = minDate;
-    document.getElementById('dateTo').max = maxDate;
-    
-    // Status
-    statusDot.className = 'status-dot online';
-    const now = new Date();
-    statusText.textContent = `Conectado · ${dadosBrutos.length} registros carregados · ${minDate} a ${maxDate} · Atualizado às ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
-    // Footer
-    document.getElementById('footerText').textContent = `Dashboard de Tráfego — Apromed 2026 · Dados ao vivo do Google Sheets + Meta Ads · Dados de ${minDate} a ${maxDate}`;
-    
-    atualizarDashboard();
-    
-  } catch (err) {
-    statusDot.className = 'status-dot error';
-    statusText.textContent = 'Erro: ' + err.message + ' — Verifique se a planilha está publicada na web.';
-    console.error('Erro ao carregar dados:', err);
-  } finally {
-    overlay.style.display = 'none';
-  }
-}
-
-function aplicarFiltro() {
-  limparAtalhoAtivo();
-  atualizarDashboard();
-}
-
-function atalhoData(tipo) {
-  const hoje = new Date();
-  let de, ate;
-  
-  switch(tipo) {
-    case 'hoje':
-      de = ate = formatarData(hoje);
-      break;
-    case '7dias':
-      ate = formatarData(hoje);
-      const d7 = new Date(hoje);
-      d7.setDate(d7.getDate() - 6);
-      de = formatarData(d7);
-      break;
-    case '30dias':
-      ate = formatarData(hoje);
-      const d30 = new Date(hoje);
-      d30.setDate(d30.getDate() - 29);
-      de = formatarData(d30);
-      break;
-    case 'mesAtual':
-      de = formatarData(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
-      ate = formatarData(hoje);
-      break;
-    case 'mesAnterior':
-      const primeiroDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-      const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-      de = formatarData(primeiroDiaMesPassado);
-      ate = formatarData(ultimoDiaMesPassado);
-      break;
-  }
-  
-  document.getElementById('dateFrom').value = de;
-  document.getElementById('dateTo').value = ate;
-  
-  // Marcar botão ativo
-  limparAtalhoAtivo();
-  const btn = document.getElementById('qf-' + tipo);
-  if (btn) btn.classList.add('active');
-  
-  atualizarDashboard();
-}
-
-function formatarData(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-function limparAtalhoAtivo() {
-  document.querySelectorAll('.btn-quick').forEach(b => b.classList.remove('active'));
-}
-
-function resetarFiltro() {
-  if (dadosBrutos.length > 0) {
-    const datas = dadosBrutos.map(d => d.day).sort();
-    const maxDate = datas[datas.length - 1];
-    const maxD = new Date(maxDate + 'T00:00:00');
-    const primeiroDiaMes = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
-    document.getElementById('dateFrom').value = primeiroDiaMes.toISOString().slice(0, 10);
-    document.getElementById('dateTo').value = maxDate;
-  }
-  atualizarDashboard();
-}
-
-// Carregar ao iniciar
-window.addEventListener('DOMContentLoaded', carregarDados);
-
-// Atualizar ao mudar filtros
-document.getElementById('dateFrom')?.addEventListener('change', atualizarDashboard);
-document.getElementById('dateTo')?.addEventListener('change', atualizarDashboard);
+window.addEventListener('DOMContentLoaded',carregarDados);
+$('dateFrom')?.addEventListener('change',()=>{document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));render()});
+$('dateTo')?.addEventListener('change',()=>{document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));render()});
 </script>
 </body>
 </html>
