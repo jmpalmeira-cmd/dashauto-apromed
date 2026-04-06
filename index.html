@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Tráfego — Apromed</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #f1f5f9;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 24px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-wrapper {
+      max-width: 1800px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+    .header-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f1f5f9;
+      letter-spacing: -0.5px;
+    }
+    .header-text p {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(10px);
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .filter-input {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #f1f5f9;
+      background: rgba(15, 23, 42, 0.5);
+      transition: all 0.3s;
+    }
+    .filter-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+    .btn-secondary {
+      background: rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .btn-secondary:hover {
+      background: rgba(148, 163, 184, 0.15);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+    .btn-refresh {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-refresh:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-bar {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 12px 32px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .status-dot.online { background: #10b981; }
+    .status-dot.loading { background: #f59e0b; }
+    .status-dot.error { background: #ef4444; animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .status-text {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .main {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 24px 32px 40px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .kpi-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, currentColor, transparent);
+    }
+    .kpi-card.blue { color: #3b82f6; }
+    .kpi-card.green { color: #10b981; }
+    .kpi-card.orange { color: #f59e0b; }
+    .kpi-card.red { color: #ef4444; }
+    .kpi-card:hover {
+      border-color: rgba(148, 163, 184, 0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .kpi-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #f1f5f9;
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+    .kpi-sub {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.5px;
+    }
+    .section-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-blue { background: #3b82f6; }
+    .dot-green { background: #10b981; }
+    .dot-orange { background: #f59e0b; }
+
+    .chart-row {
+      display: grid;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .chart-row-1 { grid-template-columns: 1fr; }
+    .chart-row-2 { grid-template-columns: repeat(2, 1fr); }
+    .chart-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 16px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+    .chart-card:hover {
+      border-color: rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .chart-wrapper {
+      position: relative;
+      height: 320px;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(59, 130, 246, 0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 32px;
+      color: #64748b;
+      font-size: 12px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      margin-top: 40px;
+    }
+
+    @media (max-width: 1024px) {
+      .chart-row-2 { grid-template-columns: 1fr; }
+      .header-wrapper { flex-direction: column; align-items: flex-start; }
+      .header-right { width: 100%; }
+    }
+    @media (max-width: 768px) {
+      .main { padding: 24px 16px; }
+      .kpi-value { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Carregando dados do Meta Ads...</div>
+</div>
+
+<div class="header">
+  <div class="header-wrapper">
+    <div class="header-left">
+      <div class="logo">A</div>
+      <div class="header-text">
+        <h1>Dashboard de Tráfego</h1>
+        <p>Apromed — Gestão de Campanhas Meta Ads</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="filter-group">
+        <span class="filter-label">De:</span>
+        <input type="date" id="dateFrom" class="filter-input" />
+        <span class="filter-label">Até:</span>
+        <input type="date" id="dateTo" class="filter-input" />
+      </div>
+      <button class="btn btn-primary" onclick="aplicarFiltro()">Filtrar</button>
+      <button class="btn btn-secondary" onclick="resetarFiltro()">Resetar</button>
+      <button class="btn btn-refresh" onclick="carregarDados()">↻ Atualizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot loading" id="statusDot"></div>
+  <span class="status-text" id="statusText">Conectando à planilha...</span>
+</div>
+
+<div class="main">
+
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Leads Totais</div>
+      <div class="kpi-value" id="totalLeads">—</div>
+      <div class="kpi-sub">Período selecionado</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Investimento</div>
+      <div class="kpi-value" id="totalInvest">—</div>
+      <div class="kpi-sub">Total acumulado</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">CPL Médio</div>
+      <div class="kpi-value" id="cplMedio">—</div>
+      <div class="kpi-sub">Custo por lead</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Dias no Período</div>
+      <div class="kpi-value" id="periodoInfo">—</div>
+      <div class="kpi-sub">Período selecionado</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span class="section-dot dot-blue"></span>
+      Leads por Semana
+    </div>
+    <div class="chart-row chart-row-1">
+      <div class="chart-card">
+        <div class="chart-wrapper">
+          <canvas id="weeklyLeadsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span class="section-dot dot-orange"></span>
+      Análise de Custo e Investimento
+    </div>
+    <div class="chart-row chart-row-2">
+      <div class="chart-card">
+        <div class="chart-wrapper">
+          <canvas id="weeklyCplChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-wrapper">
+          <canvas id="weeklySpendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <span class="section-dot dot-green"></span>
+      Performance por Especialidade
+    </div>
+    <div class="chart-row chart-row-2">
+      <div class="chart-card">
+        <div class="chart-wrapper">
+          <canvas id="campaignLeadsChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-wrapper">
+          <canvas id="campaignSpendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer" id="footerText">Dashboard de Tráfego — Apromed 2026 · Dados ao vivo do Google Sheets + Meta Ads</div>
+
+<script>
+// =====================================================================
+// CONFIGURAÇÃO — URL da planilha publicada como CSV
+// =====================================================================
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTlbw4maI8gYpwB3SqxVs5OSA88tCQVJVxgxrjlG_vzlebDI0sr8_Gzgid0zn0g6tU2Gnolw2UIaRYV/pub?gid=0&single=true&output=csv';
+
+const ESPECIALIDADES = ['Endoscopia', 'Gastroenterologia', 'Hepatologia', 'Coloproctologia', 'Cirurgia'];
+const gridColor = 'rgba(148, 163, 184, 0.1)';
+const textColor = '#94a3b8';
+
+Chart.defaults.color = textColor;
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif";
+
+let charts = {};
+let dadosBrutos = []; // Todos os registros da planilha
+
+// =====================================================================
+// PARSER CSV
+// =====================================================================
+function parseCSV(text) {
+  const lines = text.split('\n');
+  if (lines.length < 2) return [];
+  
+  // Parse header
+  const headers = parseCSVLine(lines[0]);
+  
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const values = parseCSVLine(line);
+    const row = {};
+    headers.forEach((h, idx) => {
+      row[h.trim()] = (values[idx] || '').trim();
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        result.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+// =====================================================================
+// CLASSIFICAÇÃO DE ESPECIALIDADE
+// =====================================================================
+function classificarEspecialidade(campaignName) {
+  const name = (campaignName || '').toUpperCase();
+  if (name.includes('ENDO') || name.includes('[EN')) return 'Endoscopia';
+  if (name.includes('GASTRO') || name.includes('[GA')) return 'Gastroenterologia';
+  if (name.includes('HEPATO') || name.includes('[HEP')) return 'Hepatologia';
+  if (name.includes('COLO') || name.includes('[CO')) return 'Coloproctologia';
+  if (name.includes('CIRURGIA') || name.includes('CAD') || name.includes('[CAD')) return 'Cirurgia';
+  return null; // Remarketing e outros — não conta como especialidade
+}
+
+// =====================================================================
+// PROCESSAMENTO DOS DADOS
+// =====================================================================
+function processarDados(rows) {
+  return rows.map(r => {
+    // Detectar nomes das colunas (flexível para variações)
+    const campaign = r['Campaign Name'] || r['campaign_name'] || r['Nome da campanha'] || '';
+    const dayStr = r['Day'] || r['day'] || r['Data'] || '';
+    
+    // Amount Spent pode usar vírgula como decimal (pt-BR)
+    let spendRaw = r['Amount Spent'] || r['amount_spent'] || r['Valor usado (BRL)'] || '0';
+    spendRaw = spendRaw.replace(/\./g, '').replace(',', '.'); // 1.234,56 → 1234.56
+    // Se o valor parecer ter só uma vírgula como decimal (ex: "72,1")
+    if (spendRaw === '0') {
+      spendRaw = r['Amount Spent'] || '0';
+      if (spendRaw.includes(',') && !spendRaw.includes('.')) {
+        spendRaw = spendRaw.replace(',', '.');
+      }
+    }
+    const spend = parseFloat(spendRaw) || 0;
+    
+    let leadsRaw = r['Leads'] || r['leads'] || '0';
+    const leads = parseInt(leadsRaw) || 0;
+    
+    const especialidade = classificarEspecialidade(campaign);
+    
+    return {
+      campaign,
+      day: dayStr,
+      spend,
+      leads,
+      especialidade
+    };
+  }).filter(d => d.day && d.day.match(/^\d{4}-\d{2}-\d{2}$/));
+}
+
+// =====================================================================
+// AGRUPAMENTO SEMANAL
+// =====================================================================
+function getWeekLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  // Início da semana (segunda)
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - ((day + 6) % 7));
+  // Fim da semana (domingo)
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  
+  const fmt = (dt) => {
+    const dd = String(dt.getDate()).padStart(2, '0');
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
+  };
+  
+  return {
+    label: `${fmt(monday)}–${fmt(sunday)}`,
+    sortKey: monday.toISOString().slice(0, 10)
+  };
+}
+
+function agruparPorSemana(dados, dataInicio, dataFim) {
+  const filtrados = dados.filter(d => d.day >= dataInicio && d.day <= dataFim);
+  
+  const semanas = {};
+  filtrados.forEach(d => {
+    const week = getWeekLabel(d.day);
+    if (!semanas[week.sortKey]) {
+      semanas[week.sortKey] = {
+        label: week.label,
+        sortKey: week.sortKey,
+        leads: 0,
+        spend: 0,
+        esp: {}
+      };
+      ESPECIALIDADES.forEach(e => semanas[week.sortKey].esp[e] = { leads: 0, spend: 0 });
+    }
+    const s = semanas[week.sortKey];
+    s.leads += d.leads;
+    s.spend += d.spend;
+    if (d.especialidade && ESPECIALIDADES.includes(d.especialidade)) {
+      s.esp[d.especialidade].leads += d.leads;
+      s.esp[d.especialidade].spend += d.spend;
+    }
+  });
+  
+  return Object.values(semanas).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+}
+
+function agruparPorEspecialidade(dados, dataInicio, dataFim) {
+  const filtrados = dados.filter(d => d.day >= dataInicio && d.day <= dataFim);
+  
+  const result = {};
+  ESPECIALIDADES.forEach(e => result[e] = { leads: 0, spend: 0 });
+  
+  filtrados.forEach(d => {
+    if (d.especialidade && result[d.especialidade] !== undefined) {
+      result[d.especialidade].leads += d.leads;
+      result[d.especialidade].spend += d.spend;
+    }
+  });
+  
+  return result;
+}
+
+// =====================================================================
+// ATUALIZAR DASHBOARD
+// =====================================================================
+function atualizarDashboard() {
+  const dataInicio = document.getElementById('dateFrom').value;
+  const dataFim = document.getElementById('dateTo').value;
+  
+  if (!dataInicio || !dataFim) return;
+  
+  const semanas = agruparPorSemana(dadosBrutos, dataInicio, dataFim);
+  const espData = agruparPorEspecialidade(dadosBrutos, dataInicio, dataFim);
+  
+  if (semanas.length === 0) {
+    alert('Nenhum dado encontrado para o período selecionado.');
+    return;
+  }
+  
+  // Destruir gráficos anteriores
+  Object.values(charts).forEach(c => c?.destroy());
+  charts = {};
+  
+  // Dados semanais
+  const labels = semanas.map(s => s.label);
+  const leads = semanas.map(s => s.leads);
+  const spends = semanas.map(s => s.spend);
+  const cpls = semanas.map(s => s.leads > 0 ? Math.round(s.spend / s.leads) : 0);
+  
+  // KPIs
+  const totalLeads = leads.reduce((a, b) => a + b, 0);
+  const totalSpend = spends.reduce((a, b) => a + b, 0);
+  const cplMedio = totalLeads > 0 ? Math.round(totalSpend / totalLeads) : 0;
+  
+  // Calcular dias no período
+  const d1 = new Date(dataInicio);
+  const d2 = new Date(dataFim);
+  const dias = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+  
+  document.getElementById('totalLeads').textContent = totalLeads.toLocaleString('pt-BR');
+  document.getElementById('totalInvest').textContent = totalSpend >= 1000 
+    ? 'R$ ' + (totalSpend / 1000).toFixed(1) + 'K' 
+    : 'R$ ' + Math.round(totalSpend);
+  document.getElementById('cplMedio').textContent = 'R$ ' + cplMedio;
+  document.getElementById('periodoInfo').textContent = dias + ' dias';
+  
+  // Especialidades
+  const espLeads = ESPECIALIDADES.map(e => espData[e].leads);
+  const espSpend = ESPECIALIDADES.map(e => espData[e].spend);
+  const espCpl = ESPECIALIDADES.map(e => espData[e].leads > 0 ? Math.round(espData[e].spend / espData[e].leads) : 0);
+  
+  // =====================================================================
+  // GRÁFICOS
+  // =====================================================================
+  
+  // Leads semanais
+  charts.weekly = new Chart(document.getElementById('weeklyLeadsChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Leads',
+        data: leads,
+        backgroundColor: leads.map(v => v >= 120 ? '#3b82f6' : v >= 80 ? '#60a5fa' : '#93c5fd'),
+        borderColor: 'transparent',
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` ${ctx.raw} leads` } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: gridColor, drawBorder: false }, beginAtZero: true }
+      }
+    }
+  });
+  
+  // CPL semanal
+  charts.cpl = new Chart(document.getElementById('weeklyCplChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'CPL (R$)',
+        data: cpls,
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        borderWidth: 3,
+        pointBackgroundColor: cpls.map(v => v > 200 ? '#ef4444' : '#10b981'),
+        pointRadius: 6,
+        pointBorderWidth: 2,
+        pointBorderColor: '#0f172a',
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { font: { size: 12 } } },
+        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw}` } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v } }
+      }
+    }
+  });
+  
+  // Investimento semanal
+  charts.spend = new Chart(document.getElementById('weeklySpendChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Investimento (R$)',
+        data: spends.map(v => Math.round(v)),
+        backgroundColor: '#8b5cf6',
+        borderColor: 'transparent',
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v.toLocaleString('pt-BR') } }
+      }
+    }
+  });
+  
+  // Leads por especialidade
+  charts.campLeads = new Chart(document.getElementById('campaignLeadsChart'), {
+    type: 'bar',
+    data: {
+      labels: ESPECIALIDADES,
+      datasets: [{
+        label: 'Leads',
+        data: espLeads,
+        backgroundColor: espLeads.map(v => v >= 100 ? '#10b981' : v >= 30 ? '#3b82f6' : '#f59e0b'),
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` ${ctx.raw} leads | CPL R$ ${espCpl[ctx.dataIndex]}` } }
+      },
+      scales: {
+        x: { grid: { color: gridColor, drawBorder: false } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+  
+  // Investimento por especialidade
+  charts.campSpend = new Chart(document.getElementById('campaignSpendChart'), {
+    type: 'bar',
+    data: {
+      labels: ESPECIALIDADES,
+      datasets: [{
+        label: 'Investimento (R$)',
+        data: espSpend.map(v => Math.round(v)),
+        backgroundColor: espSpend.map(v => v >= 15000 ? '#8b5cf6' : v >= 10000 ? '#a78bfa' : '#ddd6fe'),
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, callbacks: { label: ctx => ` R$ ${ctx.raw.toLocaleString('pt-BR')}` } }
+      },
+      scales: {
+        x: { grid: { color: gridColor, drawBorder: false }, ticks: { callback: v => 'R$' + v.toLocaleString('pt-BR') } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// =====================================================================
+// CARREGAR DADOS DA PLANILHA
+// =====================================================================
+async function carregarDados() {
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const overlay = document.getElementById('loadingOverlay');
+  
+  statusDot.className = 'status-dot loading';
+  statusText.textContent = 'Carregando dados da planilha...';
+  overlay.style.display = 'flex';
+  
+  try {
+    const response = await fetch(SHEET_CSV_URL);
+    if (!response.ok) throw new Error('Erro ao acessar planilha: ' + response.status);
+    
+    const text = await response.text();
+    const rows = parseCSV(text);
+    
+    if (rows.length === 0) throw new Error('Planilha vazia ou formato inválido');
+    
+    dadosBrutos = processarDados(rows);
+    
+    if (dadosBrutos.length === 0) throw new Error('Nenhum dado válido encontrado');
+    
+    // Detectar range de datas
+    const datas = dadosBrutos.map(d => d.day).sort();
+    const minDate = datas[0];
+    const maxDate = datas[datas.length - 1];
+    
+    // Setar filtros para o mês mais recente por padrão
+    const maxD = new Date(maxDate + 'T00:00:00');
+    const primeiroDiaMes = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+    const defaultFrom = primeiroDiaMes.toISOString().slice(0, 10);
+    
+    document.getElementById('dateFrom').value = defaultFrom;
+    document.getElementById('dateFrom').min = minDate;
+    document.getElementById('dateFrom').max = maxDate;
+    document.getElementById('dateTo').value = maxDate;
+    document.getElementById('dateTo').min = minDate;
+    document.getElementById('dateTo').max = maxDate;
+    
+    // Status
+    statusDot.className = 'status-dot online';
+    const now = new Date();
+    statusText.textContent = `Conectado · ${dadosBrutos.length} registros carregados · ${minDate} a ${maxDate} · Atualizado às ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // Footer
+    document.getElementById('footerText').textContent = `Dashboard de Tráfego — Apromed 2026 · Dados ao vivo do Google Sheets + Meta Ads · Dados de ${minDate} a ${maxDate}`;
+    
+    atualizarDashboard();
+    
+  } catch (err) {
+    statusDot.className = 'status-dot error';
+    statusText.textContent = 'Erro: ' + err.message + ' — Verifique se a planilha está publicada na web.';
+    console.error('Erro ao carregar dados:', err);
+  } finally {
+    overlay.style.display = 'none';
+  }
+}
+
+function aplicarFiltro() {
+  atualizarDashboard();
+}
+
+function resetarFiltro() {
+  if (dadosBrutos.length > 0) {
+    const datas = dadosBrutos.map(d => d.day).sort();
+    const maxDate = datas[datas.length - 1];
+    const maxD = new Date(maxDate + 'T00:00:00');
+    const primeiroDiaMes = new Date(maxD.getFullYear(), maxD.getMonth(), 1);
+    document.getElementById('dateFrom').value = primeiroDiaMes.toISOString().slice(0, 10);
+    document.getElementById('dateTo').value = maxDate;
+  }
+  atualizarDashboard();
+}
+
+// Carregar ao iniciar
+window.addEventListener('DOMContentLoaded', carregarDados);
+
+// Atualizar ao mudar filtros
+document.getElementById('dateFrom')?.addEventListener('change', atualizarDashboard);
+document.getElementById('dateTo')?.addEventListener('change', atualizarDashboard);
+</script>
+</body>
+</html>
