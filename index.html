@@ -296,6 +296,35 @@
       color: #94a3b8;
     }
 
+    .quick-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-quick {
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      white-space: nowrap;
+    }
+    .btn-quick:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+    .btn-quick.active {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+
     .footer {
       text-align: center;
       padding: 32px;
@@ -308,11 +337,37 @@
     @media (max-width: 1024px) {
       .chart-row-2 { grid-template-columns: 1fr; }
       .header-wrapper { flex-direction: column; align-items: flex-start; }
-      .header-right { width: 100%; }
+      .header-right { width: 100%; flex-wrap: wrap; }
+      .filter-group { width: 100%; flex-wrap: wrap; }
     }
     @media (max-width: 768px) {
-      .main { padding: 24px 16px; }
-      .kpi-value { font-size: 28px; }
+      .header { padding: 16px; }
+      .main { padding: 20px 12px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .kpi-card { padding: 18px; }
+      .kpi-value { font-size: 24px; }
+      .kpi-label { font-size: 10px; margin-bottom: 8px; }
+      .kpi-sub { font-size: 11px; }
+      .chart-card { padding: 16px; }
+      .chart-wrapper { height: 260px; }
+      .section-title { font-size: 15px; }
+      .filter-group { padding: 8px 10px; gap: 8px; }
+      .filter-input { padding: 6px 8px; font-size: 11px; width: 100%; }
+      .filter-label { font-size: 10px; }
+      .btn { padding: 8px 12px; font-size: 11px; }
+      .quick-filters { gap: 6px; }
+      .btn-quick { padding: 5px 10px; font-size: 10px; }
+      .header-text h1 { font-size: 18px; }
+      .logo { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+      .status-bar { padding: 8px 12px 0; }
+      .footer { padding: 20px 12px; }
+    }
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .kpi-value { font-size: 20px; }
+      .kpi-card { padding: 14px; }
+      .header-right { gap: 8px; }
+      .chart-wrapper { height: 220px; }
     }
   </style>
 </head>
@@ -333,6 +388,13 @@
       </div>
     </div>
     <div class="header-right">
+      <div class="quick-filters">
+        <button class="btn-quick" onclick="atalhoData('hoje')" id="qf-hoje">Hoje</button>
+        <button class="btn-quick" onclick="atalhoData('7dias')" id="qf-7dias">7 dias</button>
+        <button class="btn-quick" onclick="atalhoData('30dias')" id="qf-30dias">30 dias</button>
+        <button class="btn-quick" onclick="atalhoData('mesAtual')" id="qf-mesAtual">Mês atual</button>
+        <button class="btn-quick" onclick="atalhoData('mesAnterior')" id="qf-mesAnterior">Mês anterior</button>
+      </div>
       <div class="filter-group">
         <span class="filter-label">De:</span>
         <input type="date" id="dateFrom" class="filter-input" />
@@ -873,7 +935,59 @@ async function carregarDados() {
 }
 
 function aplicarFiltro() {
+  limparAtalhoAtivo();
   atualizarDashboard();
+}
+
+function atalhoData(tipo) {
+  const hoje = new Date();
+  let de, ate;
+  
+  switch(tipo) {
+    case 'hoje':
+      de = ate = formatarData(hoje);
+      break;
+    case '7dias':
+      ate = formatarData(hoje);
+      const d7 = new Date(hoje);
+      d7.setDate(d7.getDate() - 6);
+      de = formatarData(d7);
+      break;
+    case '30dias':
+      ate = formatarData(hoje);
+      const d30 = new Date(hoje);
+      d30.setDate(d30.getDate() - 29);
+      de = formatarData(d30);
+      break;
+    case 'mesAtual':
+      de = formatarData(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+      ate = formatarData(hoje);
+      break;
+    case 'mesAnterior':
+      const primeiroDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      const ultimoDiaMesPassado = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+      de = formatarData(primeiroDiaMesPassado);
+      ate = formatarData(ultimoDiaMesPassado);
+      break;
+  }
+  
+  document.getElementById('dateFrom').value = de;
+  document.getElementById('dateTo').value = ate;
+  
+  // Marcar botão ativo
+  limparAtalhoAtivo();
+  const btn = document.getElementById('qf-' + tipo);
+  if (btn) btn.classList.add('active');
+  
+  atualizarDashboard();
+}
+
+function formatarData(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function limparAtalhoAtivo() {
+  document.querySelectorAll('.btn-quick').forEach(b => b.classList.remove('active'));
 }
 
 function resetarFiltro() {
