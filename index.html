@@ -361,7 +361,7 @@
     </div>
     <div class="kpi-card green">
       <div class="kpi-label">Investimento</div>
-      <div class="kpi-value" id="totalInvest">—</div>
+      <div class="kpi-value" id="totalInvest" style="font-size:28px">—</div>
       <div class="kpi-sub">Total acumulado</div>
     </div>
     <div class="kpi-card orange">
@@ -661,9 +661,7 @@ function atualizarDashboard() {
   const dias = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
   
   document.getElementById('totalLeads').textContent = totalLeads.toLocaleString('pt-BR');
-  document.getElementById('totalInvest').textContent = totalSpend >= 1000 
-    ? 'R$ ' + (totalSpend / 1000).toFixed(1) + 'K' 
-    : 'R$ ' + Math.round(totalSpend);
+  document.getElementById('totalInvest').textContent = 'R$ ' + totalSpend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById('cplMedio').textContent = 'R$ ' + cplMedio;
   document.getElementById('periodoInfo').textContent = dias + ' dias';
   
